@@ -2,6 +2,7 @@ from datetime import datetime
 import pickle
 import json
 import logging
+import threading
 
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -21,6 +22,7 @@ model_type = None
 hyperparameters = None
 
 logger = logging.getLogger(__name__)
+model_lock = threading.Lock()
 
 
 def load_churn_model(path):
@@ -41,23 +43,55 @@ def save_churn_model(model, trained_at, metrics, model_type, hyperparameters):
         pickle.dump(data, file)
 
 
-data = load_churn_model(MODEL_PATH)
+try:
+    data = load_churn_model(MODEL_PATH)
 
-model = data["model"]
-trained_at = data["trained_at"]
-metrics = data["metrics"]
-model_type = data["model_type"]
-hyperparameters = data["hyperparameters"]
+    model = data["model"]
+    trained_at = data["trained_at"]
+    metrics = data["metrics"]
+    model_type = data["model_type"]
+    hyperparameters = data["hyperparameters"]
 
-print("Model loaded")
+    logger.info("Model loaded successfully")
+
+except (FileNotFoundError, pickle.UnpicklingError, EOFError, KeyError) as exc:
+    model = None
+    trained_at = None
+    metrics = None
+    model_type = None
+    hyperparameters = None
+
+    logger.warning("Model could not be loaded from %s: %s", MODEL_PATH, exc)
 
 
 preprocessor = ColumnTransformer(
     transformers=[
         ("num", StandardScaler(), num_cols),
-        ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+        (
+            "cat",
+            OneHotEncoder(handle_unknown="ignore", sparse_output=False),
+            cat_cols,
+        ),
     ]
 )
+
+ALLOWED_HYPERPARAMETERS = {
+    "logreg": {
+        "C",
+        "max_iter",
+        "solver",
+        "tol",
+        "fit_intercept",
+    },
+    "random_forest": {
+        "n_estimators",
+        "max_depth",
+        "min_samples_split",
+        "min_samples_leaf",
+        "max_features",
+        "criterion",
+    },
+}
 
 
 def train_churn_model(
@@ -70,36 +104,71 @@ def train_churn_model(
     global model_type
     global hyperparameters
 
+    if model_type_input not in ALLOWED_HYPERPARAMETERS:
+        raise ValueError(f"Unknown model type: {model_type_input}")
+
+    allowed = ALLOWED_HYPERPARAMETERS[model_type_input]
+
+    unknown = set(hyperparameters_input) - allowed
+
+    if unknown:
+        raise ValueError(f"Unsupported hyperparameters: {sorted(unknown)}")
+
     if model_type_input == "logreg":
-        classifier = LogisticRegression(random_state=42, **hyperparameters_input)
+        classifier = LogisticRegression(
+            random_state=42, **hyperparameters_input
+        )
 
     elif model_type_input == "random_forest":
-        classifier = RandomForestClassifier(random_state=42, **hyperparameters_input)
+        classifier = RandomForestClassifier(
+            random_state=42, **hyperparameters_input
+        )
 
     else:
         raise ValueError(f"Unknown model type: {model_type_input}")
 
-    model = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", classifier)])
-
-    model.fit(X_train, y_train)
-    metrics = {
-        "accuracy": accuracy_score(y_test, model.predict(X_test)),
-        "f1": f1_score(y_test, model.predict(X_test)),
-        "roc_auc": roc_auc_score(y_test, model.predict_proba(X_test)[:, 1]),
-    }
-    model_type = model_type_input
-    hyperparameters = hyperparameters_input
-    trained_at = datetime.now().isoformat()
-
-    save_churn_model(
-        model,
-        trained_at,
-        metrics,
-        model_type,
-        hyperparameters,
+    candidate_model = Pipeline(
+        steps=[("preprocessor", preprocessor), ("classifier", classifier)]
     )
 
-    save_to_archive(trained_at, model_type, hyperparameters, metrics)
+    candidate_model.fit(X_train, y_train)
+
+    y_pred = candidate_model.predict(X_test)
+    y_proba = candidate_model.predict_proba(X_test)[:, 1]
+
+    candidate_metrics = {
+        "accuracy": accuracy_score(y_test, y_pred),
+        "f1": f1_score(y_test, y_pred),
+        "roc_auc": roc_auc_score(y_test, y_proba),
+    }
+
+    candidate_model_type = model_type_input
+    candidate_hyperparameters = hyperparameters_input.copy()
+    candidate_trained_at = datetime.now().isoformat()
+
+    # на всякий случай убедимся, что сохранение тоже прошло успешно
+    save_churn_model(
+        candidate_model,
+        candidate_trained_at,
+        candidate_metrics,
+        candidate_model_type,
+        candidate_hyperparameters,
+    )
+
+    save_to_archive(
+        candidate_trained_at,
+        candidate_model_type,
+        candidate_hyperparameters,
+        candidate_metrics,
+    )
+
+    # lock отрабатывает быстро
+    with model_lock:
+        model = candidate_model
+        trained_at = candidate_trained_at
+        metrics = candidate_metrics
+        model_type = candidate_model_type
+        hyperparameters = candidate_hyperparameters
 
     logger.info(
         "Model trained: type=%s, hyperparameters=%s, metrics=%s",
@@ -140,5 +209,5 @@ def load_archive():
     try:
         with open(ARCHIVE_PATH, "r") as file:
             return json.load(file)
-    except FileNotFoundError:
+    except (FileNotFoundError, json.JSONDecodeError):
         return []

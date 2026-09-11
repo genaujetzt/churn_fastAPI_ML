@@ -1,6 +1,7 @@
 from typing import Any
+from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class FeatureVectorChurn(BaseModel):
@@ -35,8 +36,24 @@ class PredictionResponseChurn(BaseModel):
 
 
 class TrainingConfigChurn(BaseModel):
-    model_type: str
-    hyperparameters: dict
+    model_type: Literal["logreg", "random_forest"] = Field(
+        description="Model type: logreg or random_forest",
+        examples=["logreg"],
+    )
+
+    hyperparameters: dict = Field(
+        description=(
+            "Model-specific hyperparameters. "
+            "For logreg: C, max_iter. "
+            "For random_forest: n_estimators, max_depth."
+        ),
+        examples=[
+            {
+                "C": 1.0,
+                "max_iter": 1000,
+            }
+        ],
+    )
 
 
 class ErrorResponse(BaseModel):

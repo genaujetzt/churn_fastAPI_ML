@@ -75,10 +75,16 @@ def traintest_split(X, y):
     split_info = {
         "train_size": len(X_train),
         "test_size": len(X_test),
-        "train_churn_distribution": y_train.value_counts(normalize=True).to_dict(),
-        "test_churn_distribution": y_test.value_counts(normalize=True).to_dict(),
+        "train_churn_distribution": y_train.value_counts(
+            normalize=True
+        ).to_dict(),
+        "test_churn_distribution": y_test.value_counts(
+            normalize=True
+        ).to_dict(),
     }
 
-    logger.info("Dataset split completed: train=%d, test=%d", len(X_train), len(X_test))
+    logger.info(
+        "Dataset split completed: train=%d, test=%d", len(X_train), len(X_test)
+    )
 
     return X_train, X_test, y_train, y_test, split_info

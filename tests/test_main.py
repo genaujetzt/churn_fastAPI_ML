@@ -20,7 +20,10 @@ def test_training_and_prediction_flow():
     # 2. Запускаем обучение модели
     response = client.post(
         "/model/train",
-        json={"model_type": "logreg", "hyperparameters": {"C": 1.0, "max_iter": 1000}},
+        json={
+            "model_type": "logreg",
+            "hyperparameters": {"C": 1.0, "max_iter": 1000},
+        },
     )
 
     assert response.status_code == 200
@@ -130,8 +133,23 @@ def test_train_unknown_model():
         "/model/train", json={"model_type": "catboost", "hyperparameters": {}}
     )
 
+    assert response.status_code == 422
+
+    data = response.json()
+
+    assert data["code"] == 422
+
+
+def test_train_invalid_hyperparameter():
+    response = client.post(
+        "/model/train",
+        json={"model_type": "logreg", "hyperparameters": {"C": -1}},
+    )
+
     assert response.status_code == 400
 
     data = response.json()
 
     assert data["code"] == 400
+    assert data["message"] == "Invalid model parameters"
+    assert data["details"] is not None

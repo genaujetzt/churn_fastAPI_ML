@@ -17,7 +17,12 @@ def test_logreg_training():
     X_train, X_test, y_train, y_test, _ = get_train_test_data()
 
     model = train_churn_model(
-        X_train, X_test, y_train, y_test, "logreg", {"C": 1.0, "max_iter": 1000}
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        "logreg",
+        {"C": 1.0, "max_iter": 1000},
     )
 
     assert model is not None
@@ -46,7 +51,12 @@ def test_training_metrics():
     X_train, X_test, y_train, y_test, _ = get_train_test_data()
 
     train_churn_model(
-        X_train, X_test, y_train, y_test, "logreg", {"C": 1.0, "max_iter": 1000}
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        "logreg",
+        {"C": 1.0, "max_iter": 1000},
     )
 
     from src import train
