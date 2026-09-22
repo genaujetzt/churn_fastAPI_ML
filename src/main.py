@@ -150,23 +150,37 @@ def home():
     """,
 )
 def predict(features: FeatureVectorChurn):
-    with train.model_lock:
+
+    with train.state_lock:
         current_model = train.model
 
     if current_model is None:
-        raise HTTPException(status_code=503, detail="Model is not trained")
+        raise HTTPException(
+            status_code=503,
+            detail="Model is not trained",
+        )
+
     data = features.model_dump()
-    df = pd.DataFrame([data], columns=num_cols + cat_cols)
+
+    df = pd.DataFrame(
+        [data],
+        columns=num_cols + cat_cols,
+    )
 
     prediction = current_model.predict(df)[0]
+
     probabilities = current_model.predict_proba(df)[0]
 
     logger.info("Prediction requested")
 
     return {
         "prediction": int(prediction),
-        "probability_no_churn": float(probabilities[0]),
-        "probability_churn": float(probabilities[1]),
+        "probability_no_churn": float(
+            probabilities[0]
+        ),
+        "probability_churn": float(
+            probabilities[1]
+        ),
     }
 
 
@@ -206,13 +220,14 @@ def train_model(config: TrainingConfigChurn):
 
 @app.get("/model/status")
 def model_status():
-    return {
-        "trained": train.model is not None,
-        "trained_at": train.trained_at,
-        "metrics": train.metrics,
-        "model_type": train.model_type,
-        "hyperparameters": train.hyperparameters,
-    }
+    with train.state_lock:
+        return {
+            "trained": train.model is not None,
+            "trained_at": train.trained_at,
+            "metrics": train.metrics,
+            "model_type": train.model_type,
+            "hyperparameters": train.hyperparameters,
+        }
 
 
 @app.get("/model/schema")

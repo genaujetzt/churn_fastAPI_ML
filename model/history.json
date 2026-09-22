@@ -636,5 +636,247 @@
         "accuracy": 0.7875,
         "f1": 0.0449438202247191,
         "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T04:50:53.911240",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T04:50:54.230399",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T04:50:54.477585",
+        "model_type": "random_forest",
+        "hyperparameters": {
+            "n_estimators": 100,
+            "max_depth": 5
+        },
+        "accuracy": 0.8,
+        "f1": 0.06976744186046512,
+        "roc_auc": 0.6221990015093464
+    },
+    {
+        "timestamp": "2026-09-22T04:50:54.593596",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:06:54.413049",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:06:54.749680",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:06:55.020481",
+        "model_type": "random_forest",
+        "hyperparameters": {
+            "n_estimators": 100,
+            "max_depth": 5
+        },
+        "accuracy": 0.8,
+        "f1": 0.06976744186046512,
+        "roc_auc": 0.6221990015093464
+    },
+    {
+        "timestamp": "2026-09-22T05:06:55.100660",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:07:13.625857",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:07:13.946249",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:07:14.197462",
+        "model_type": "random_forest",
+        "hyperparameters": {
+            "n_estimators": 100,
+            "max_depth": 5
+        },
+        "accuracy": 0.8,
+        "f1": 0.06976744186046512,
+        "roc_auc": 0.6221990015093464
+    },
+    {
+        "timestamp": "2026-09-22T05:07:14.273765",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:08:41.450282",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:08:41.825996",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:08:42.110911",
+        "model_type": "random_forest",
+        "hyperparameters": {
+            "n_estimators": 100,
+            "max_depth": 5
+        },
+        "accuracy": 0.8,
+        "f1": 0.06976744186046512,
+        "roc_auc": 0.6221990015093464
+    },
+    {
+        "timestamp": "2026-09-22T05:08:42.197553",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:10:24.047286",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:10:24.233731",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "roc_auc": 1.0
+    },
+    {
+        "timestamp": "2026-09-22T05:10:24.336298",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:10:24.436864",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
+    },
+    {
+        "timestamp": "2026-09-22T05:10:24.716516",
+        "model_type": "random_forest",
+        "hyperparameters": {
+            "n_estimators": 100,
+            "max_depth": 5
+        },
+        "accuracy": 0.8,
+        "f1": 0.06976744186046512,
+        "roc_auc": 0.6221990015093464
+    },
+    {
+        "timestamp": "2026-09-22T05:10:24.800181",
+        "model_type": "logreg",
+        "hyperparameters": {
+            "C": 1.0,
+            "max_iter": 1000
+        },
+        "accuracy": 0.7875,
+        "f1": 0.0449438202247191,
+        "roc_auc": 0.6091179999225975
     }
 ]

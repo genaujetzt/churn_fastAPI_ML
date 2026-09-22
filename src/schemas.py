@@ -1,10 +1,12 @@
 from typing import Any
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class FeatureVectorChurn(BaseModel):
+    model_config = ConfigDict(extra="forbid") #запретим лишнее
+
     monthly_fee: float
     usage_hours: float
     support_requests: int
@@ -36,23 +38,20 @@ class PredictionResponseChurn(BaseModel):
 
 
 class TrainingConfigChurn(BaseModel):
-    model_type: Literal["logreg", "random_forest"] = Field(
-        description="Model type: logreg or random_forest",
-        examples=["logreg"],
-    )
+    model_config = ConfigDict(extra="forbid")
+
+    model_type: Literal[
+        "logreg",
+        "random_forest",
+    ]
 
     hyperparameters: dict = Field(
-        description=(
-            "Model-specific hyperparameters. "
-            "For logreg: C, max_iter. "
-            "For random_forest: n_estimators, max_depth."
-        ),
         examples=[
             {
                 "C": 1.0,
                 "max_iter": 1000,
             }
-        ],
+        ]
     )
 
 

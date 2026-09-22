@@ -18,29 +18,109 @@ num_cols = [
 ]
 cat_cols = ["region", "device_type", "payment_method"]
 
+EXPECTED_COLUMNS = (
+    num_cols
+    + cat_cols
+    + ["churn"]
+)
 
-def preview_dataset(path: str, n: int = 5) -> list[dict]:
+def validate_dataset(df: pd.DataFrame) -> None:
+
+    if df.empty:
+        raise ValueError("Dataset is empty")
+
+    actual_columns = set(df.columns)
+    expected_columns = set(EXPECTED_COLUMNS)
+
+    missing_columns = expected_columns - actual_columns
+    extra_columns = actual_columns - expected_columns
+
+    if missing_columns or extra_columns:
+        raise ValueError(
+            "Invalid dataset columns. "
+            f"Missing: {sorted(missing_columns)}. "
+            f"Extra: {sorted(extra_columns)}."
+        )
+
+    if df["churn"].isna().any():
+        raise ValueError(
+            "Target column 'churn' contains missing values"
+        )
+
+    if not pd.api.types.is_numeric_dtype(
+        df["churn"]
+    ):
+        raise ValueError(
+            "Target column 'churn' must be numeric"
+        )
+
+    churn_values = set(
+        df["churn"].unique()
+    )
+
+    if not churn_values.issubset({0, 1}):
+        raise ValueError(
+            "Target column 'churn' must contain only 0 and 1"
+        )
+
+    if churn_values != {0, 1}:
+        raise ValueError(
+            "Target column 'churn' must contain both 0 and 1"
+        )
+
+    for column in num_cols:
+        if not pd.api.types.is_numeric_dtype(
+            df[column]
+        ):
+            raise ValueError(
+                f"Numeric column '{column}' must be numeric"
+            )
+
+
+def read_validated_dataset(path: str) -> pd.DataFrame:
     df = pd.read_csv(path)
-    logger.info("Dataset loaded for preview: %s", path)
-    return df.head(n).to_dict(orient="records")
 
+    validate_dataset(df)
 
-def dataset_info(path: str) -> dict:
-    df = pd.read_csv(path)
     logger.info(
-        "Dataset info requested: %s, rows=%d, columns=%d",
-        path,
+        "Dataset validated: rows=%d, columns=%d",
         df.shape[0],
         df.shape[1],
     )
+
+    return df
+
+
+def preview_dataset(
+    path: str,
+    n: int = 5,
+) -> list[dict]:
+
+    df = read_validated_dataset(path)
+
+    return df.head(n).to_dict(
+        orient="records"
+    )
+
+
+def dataset_info(path: str) -> dict:
+
+    df = read_validated_dataset(path)
+
     rows, columns = df.shape
-    column_names = df.columns.to_list()
-    distribution = df["churn"].value_counts(normalize=True)
+
+    distribution = (
+        df["churn"]
+        .value_counts(normalize=True)
+    )
+
     return {
         "rows": rows,
         "columns": columns,
-        "features": column_names,
-        "churn_distribution": distribution.to_dict(),
+        "features": df.columns.tolist(),
+        "churn_distribution": (
+            distribution.to_dict()
+        ),
     }
 
 
@@ -59,12 +139,19 @@ def load_dataset(path: str) -> list[DatasetRowChurn]:
     return rows
 
 
-def preprocessing(path: str) -> tuple[pd.DataFrame, pd.Series]:
+def preprocessing(
+    path: str,
+) -> tuple[pd.DataFrame, pd.Series]:
 
-    df = pd.read_csv(path)
-    logger.info("Preprocessing dataset: %s, rows=%d", path, len(df))
+    df = read_validated_dataset(path)
 
-    X, y = df.drop(["churn"], axis=1), df["churn"]
+    X = df.drop(
+        ["churn"],
+        axis=1,
+    )
+
+    y = df["churn"]
+
     return X, y
 
 
