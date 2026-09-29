@@ -273,3 +273,107 @@ def test_failed_training_keeps_previous_model():
     assert train.model is previous_model
     assert train.metrics == previous_metrics
 
+def test_train_returns_metrics_from_current_training(monkeypatch):
+    expected_metrics = {
+        "accuracy": 0.91,
+        "f1": 0.88,
+        "roc_auc": 0.95,
+    }
+
+    other_metrics = {
+        "accuracy": 0.10,
+        "f1": 0.05,
+        "roc_auc": 0.20,
+    }
+
+    def fake_train_churn_model(*args, **kwargs):
+        # Имитируем ситуацию, когда глобальные metrics
+        # уже были изменены другим обучением.
+        train.metrics = other_metrics
+        return expected_metrics
+
+    monkeypatch.setattr(
+        train,
+        "train_churn_model",
+        fake_train_churn_model,
+    )
+
+    response = client.post(
+        "/model/train",
+        json={
+            "model_type": "logreg",
+            "hyperparameters": {},
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == expected_metrics
+
+def test_persistence_does_not_publish_if_history_serialization_fails(
+    tmp_path,
+    monkeypatch,
+):
+    model_path = tmp_path / "model.pkl"
+    history_path = tmp_path / "history.json"
+
+    old_model = b"old-model"
+    old_history = '[{"accuracy": 0.80}]'
+
+    model_path.write_bytes(old_model)
+    history_path.write_text(
+        old_history,
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        train,
+        "MODEL_PATH",
+        str(model_path),
+    )
+
+    monkeypatch.setattr(
+        train,
+        "ARCHIVE_PATH",
+        str(history_path),
+    )
+
+    def fail_history_serialization(*args, **kwargs):
+        raise OSError("history serialization failed")
+
+    monkeypatch.setattr(
+        train,
+        "_write_json_temp",
+        fail_history_serialization,
+    )
+
+    model_data = {
+        "model": {"dummy": "model"},
+        "trained_at": "2026-09-29T00:00:00",
+        "metrics": {
+            "accuracy": 0.90,
+            "f1": 0.85,
+            "roc_auc": 0.93,
+        },
+        "model_type": "logreg",
+        "hyperparameters": {},
+    }
+
+    history_data = [
+        {
+            "accuracy": 0.80,
+        },
+        {
+            "accuracy": 0.90,
+        },
+    ]
+
+    with pytest.raises(OSError):
+        train.persist_training_artifacts(
+            model_data,
+            history_data,
+        )
+
+    assert model_path.read_bytes() == old_model
+    assert history_path.read_text(
+        encoding="utf-8"
+    ) == old_history

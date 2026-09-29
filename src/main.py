@@ -206,7 +206,7 @@ def train_model(config: TrainingConfigChurn):
 
     X_train, X_test, y_train, y_test, _ = traintest_split(X, y)
 
-    model = train.train_churn_model(
+    metrics = train.train_churn_model(
         X_train,
         X_test,
         y_train,
@@ -215,7 +215,7 @@ def train_model(config: TrainingConfigChurn):
         config.hyperparameters,
     )
 
-    return train.metrics
+    return metrics
 
 
 @app.get("/model/status")

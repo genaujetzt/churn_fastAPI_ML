@@ -36,7 +36,7 @@ def load_churn_model(path):
         return pickle.load(file)
 
 
-def _atomic_pickle_dump(data, path):
+def _write_pickle_temp(data, path):
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
 
@@ -56,7 +56,7 @@ def _atomic_pickle_dump(data, path):
             temp_file.flush()
             os.fsync(temp_file.fileno())
 
-        os.replace(temp_path, destination)
+        return temp_path
 
     except Exception:
         if temp_path is not None:
@@ -82,7 +82,7 @@ def save_churn_model(
         "hyperparameters": hyperparameters,
     }
 
-    _atomic_pickle_dump(data, MODEL_PATH)
+    _write_pickle_temp(data, MODEL_PATH)
 
 
 try:
@@ -207,7 +207,11 @@ def train_churn_model(
                 ("classifier", classifier),
             ]
         )
-
+        logger.info(
+            "Starting training: type=%s, hyperparameters=%s",
+            model_type_input,
+            hyperparameters_input,
+        )
         # Глобальная рабочая модель НЕ меняется.
         candidate_model.fit(
             X_train,
@@ -243,24 +247,28 @@ def train_churn_model(
             hyperparameters_input.copy()
         )
 
-        #готовим и сохраняем историю.
-        save_to_archive(
-            candidate_trained_at,
-            candidate_model_type,
-            candidate_hyperparameters,
-            candidate_metrics,
+        history = load_archive()
+        candidate_history = [
+            *history,
+            {
+                "trained_at": candidate_trained_at,
+                "model_type": candidate_model_type,
+                "hyperparameters": candidate_hyperparameters,
+                **candidate_metrics,
+            },
+        ]
+        model_data = {
+            "model": candidate_model,
+            "trained_at": candidate_trained_at,
+            "metrics": candidate_metrics,
+            "model_type": candidate_model_type,
+            "hyperparameters": candidate_hyperparameters,
+        }
+        persist_training_artifacts(
+            model_data,
+            candidate_history,
         )
-
-        # Только после успешного сохранения истории
-        # атомарно заменяем model.pkl.
-        save_churn_model(
-            candidate_model,
-            candidate_trained_at,
-            candidate_metrics,
-            candidate_model_type,
-            candidate_hyperparameters,
-        )
-
+        
         # И только после успешного persistence
         # публикуем candidate как рабочее состояние.
         with state_lock:
@@ -273,16 +281,16 @@ def train_churn_model(
         logger.info(
             "Model trained: type=%s, "
             "hyperparameters=%s, metrics=%s",
-            model_type,
-            hyperparameters,
-            metrics,
+            candidate_model_type,
+            candidate_hyperparameters,
+            candidate_metrics,
         )
 
-        return candidate_model
+        return candidate_metrics
 
 ARCHIVE_PATH = "model/history.json"
 
-def _atomic_json_dump(data, path):
+def _write_json_temp(data, path):
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
 
@@ -308,7 +316,7 @@ def _atomic_json_dump(data, path):
             temp_file.flush()
             os.fsync(temp_file.fileno())
 
-        os.replace(temp_path, destination)
+        return temp_path
 
     except Exception:
         if temp_path is not None:
@@ -339,7 +347,7 @@ def save_to_archive(
         }
     )
 
-    _atomic_json_dump(history, ARCHIVE_PATH)
+    _write_json_temp(history, ARCHIVE_PATH)
 
 
 def load_archive():
@@ -348,3 +356,44 @@ def load_archive():
             return json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
         return []
+
+
+#будет одновременно публиковать оба файла
+def persist_training_artifacts(
+    model_data: dict,
+    history_data: list,
+) -> None:
+    model_temp = None
+    history_temp = None
+
+    try:
+        # Сначала полностью сериализуем 
+        model_temp = _write_pickle_temp(
+            model_data,
+            MODEL_PATH,
+        )
+
+        history_temp = _write_json_temp(
+            history_data,
+            ARCHIVE_PATH,
+        )
+
+        # после успешной сериализации обоих публикуем как рабочие файлы.
+        os.replace(model_temp, MODEL_PATH)
+        model_temp = None
+
+        os.replace(history_temp, ARCHIVE_PATH)
+        history_temp = None
+
+    finally:
+        if model_temp is not None:
+            try:
+                os.unlink(model_temp)
+            except FileNotFoundError:
+                pass
+
+        if history_temp is not None:
+            try:
+                os.unlink(history_temp)
+            except FileNotFoundError:
+                pass

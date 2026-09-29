@@ -1,8 +1,9 @@
 import pytest
 import pandas as pd
 
-from src.dataset import preprocessing, traintest_split
+from src.dataset import preprocessing, train_test_split
 from src.train import train_churn_model
+
 
 DATASET_PATH = "data/churn_dataset.csv"
 
@@ -10,13 +11,13 @@ DATASET_PATH = "data/churn_dataset.csv"
 def get_train_test_data():
     X, y = preprocessing(DATASET_PATH)
 
-    return traintest_split(X, y)
+    return train_test_split(X, y)
 
 
 def test_logreg_training():
-    X_train, X_test, y_train, y_test, _ = get_train_test_data()
+    X_train, X_test, y_train, y_test = get_train_test_data()
 
-    model = train_churn_model(
+    metrics = train_churn_model(
         X_train,
         X_test,
         y_train,
@@ -25,15 +26,22 @@ def test_logreg_training():
         {"C": 1.0, "max_iter": 1000},
     )
 
-    assert model is not None
-    assert "preprocessor" in model.named_steps
-    assert "classifier" in model.named_steps
+    assert metrics is not None
+    assert "accuracy" in metrics
+    assert "f1" in metrics
+    assert "roc_auc" in metrics
+
+    from src import train
+
+    assert train.model is not None
+    assert "preprocessor" in train.model.named_steps
+    assert "classifier" in train.model.named_steps
 
 
 def test_random_forest_training():
-    X_train, X_test, y_train, y_test, _ = get_train_test_data()
+    X_train, X_test, y_train, y_test = get_train_test_data()
 
-    model = train_churn_model(
+    metrics = train_churn_model(
         X_train,
         X_test,
         y_train,
@@ -42,13 +50,20 @@ def test_random_forest_training():
         {"n_estimators": 100, "max_depth": 5},
     )
 
-    assert model is not None
-    assert "preprocessor" in model.named_steps
-    assert "classifier" in model.named_steps
+    assert metrics is not None
+    assert "accuracy" in metrics
+    assert "f1" in metrics
+    assert "roc_auc" in metrics
+
+    from src import train
+
+    assert train.model is not None
+    assert "preprocessor" in train.model.named_steps
+    assert "classifier" in train.model.named_steps
 
 
 def test_training_metrics():
-    X_train, X_test, y_train, y_test, _ = get_train_test_data()
+    X_train, X_test, y_train, y_test = get_train_test_data()
 
     train_churn_model(
         X_train,
@@ -74,10 +89,17 @@ def test_training_metrics():
 def test_unknown_model_type():
     X, y = preprocessing(DATASET_PATH)
 
-    X_train, X_test, y_train, y_test, _ = traintest_split(X, y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
 
     with pytest.raises(ValueError):
-        train_churn_model(X_train, X_test, y_train, y_test, "catboost", {})
+        train_churn_model(
+            X_train,
+            X_test,
+            y_train,
+            y_test,
+            "catboost",
+            {},
+        )
 
 
 def make_test_data():
