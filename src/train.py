@@ -83,6 +83,27 @@ def save_churn_model(
     }
 
     _write_pickle_temp(data, MODEL_PATH)
+    
+    temp_path = None
+    try:
+        temp_path = _write_pickle_temp(
+            data,
+            MODEL_PATH,
+        )
+
+        os.replace(
+            temp_path,
+            MODEL_PATH,
+        )
+
+        temp_path = None
+
+    finally:
+        if temp_path is not None:
+            try:
+                os.unlink(temp_path)
+            except FileNotFoundError:
+                pass
 
 
 try:
@@ -347,8 +368,28 @@ def save_to_archive(
         }
     )
 
-    _write_json_temp(history, ARCHIVE_PATH)
+    
+    temp_path = None
 
+    try:
+        temp_path = _write_json_temp(
+            history,
+            ARCHIVE_PATH,
+        )
+
+        os.replace(
+            temp_path,
+            ARCHIVE_PATH,
+        )
+
+        temp_path = None
+
+    finally:
+        if temp_path is not None:
+            try:
+                os.unlink(temp_path)
+            except FileNotFoundError:
+                pass
 
 def load_archive():
     try:
